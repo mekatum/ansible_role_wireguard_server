@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--{{ ansible_managed }}-->
+<service>
+  <short>wireguard</short>
+  <description>WireGuard open UDP port {{ wireguard_port }} for client connections</description>
+  <port protocol="udp" port="{{ wireguard_port }}"/>
+</service>
+

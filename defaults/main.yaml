@@ -1,0 +1,3 @@
+---
+systemd_networkd_config_dir: "/etc/systemd/network"
+wireguard_port: 31194

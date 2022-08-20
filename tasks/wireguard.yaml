@@ -1,0 +1,93 @@
+---
+- name: Register if config/private key already exists on target host
+  stat:
+    path: "{{ systemd_networkd_config_dir }}/99-wg0.netdev"
+  register: wireguard__register_config_file
+
+- name: Generate private key for wireguard-server
+  block:
+    - name: Generate WireGuard private key
+      command: "wg genkey"
+      register: wireguard__register_private_key
+      changed_when: false
+      no_log: '{{ ansible_verbosity < 3 }}'
+    - name: Set private key fact
+      set_fact:
+        wireguard_private_key: "{{ wireguard__register_private_key.stdout }}"
+      no_log: '{{ ansible_verbosity < 3 }}'
+  when:
+    - not wireguard__register_config_file.stat.exists
+    - wireguard_private_key is not defined
+
+- name: WireGuard private key handling for existing private key
+  block:
+    - name: Read WireGuard config file
+      slurp:
+        src: "{{ systemd_networkd_config_dir }}/99-wg0.netdev"
+      register: wireguard__register_config
+      no_log: '{{ ansible_verbosity < 3 }}'
+
+    - name: Set private key as fact
+      set_fact:
+        wireguard_private_key: "{{ wireguard__register_config['content'] | b64decode | regex_findall('PrivateKey=(.*)') | first }}"
+      no_log: '{{ ansible_verbosity < 3 }}'
+  when:
+    - wireguard__register_config_file.stat.exists
+    - wireguard_private_key is not defined
+
+- name: Get WireGuard public key
+  command: "wg pubkey"
+  args:
+    stdin: "{{ wireguard_private_key }}"
+  register: wireguard__register_public_key
+  changed_when: false
+  check_mode: false
+  no_log: '{{ ansible_verbosity < 3 }}'
+
+- name: Set public key as fact
+  set_fact:
+    wireguard__fact_public_key: "{{ wireguard__register_public_key.stdout }}"
+
+- debug:
+    var: wireguard__fact_public_key
+
+- name: Public PublicKey
+  template:
+    src: etc/systemd/network/wg0_public.key.j2
+    dest: "{{ systemd_networkd_config_dir }}/wg0_public.key"
+    owner: root
+    group: systemd-network
+    mode: 0640
+
+- name: Create WireGuard config dir
+  file:
+    dest: "{{ systemd_networkd_config_dir }}"
+    state: directory
+    mode: 0755
+
+- name: Create Systemd netdev config
+  template:
+    src: etc/systemd/network/99-wg0.netdev.j2
+    dest: "{{ systemd_networkd_config_dir }}/99-wg0.netdev"
+    owner: root
+    group: systemd-network
+    mode: 0640
+  notify:
+    - reconfig wireguard
+
+- name: Create Systemd network config
+  template:
+    src: etc/systemd/network/99-wg0.network.j2
+    dest: "{{ systemd_networkd_config_dir }}/99-wg0.network"
+    owner: root
+    group: systemd-network
+    mode: 0644
+  no_log: '{{ ansible_verbosity < 3 }}'
+  notify:
+    - reconfig wireguard
+
+- name: Enable systemd-networkd service
+  systemd:
+    name: systemd-networkd
+    state: started
+    enabled: yes

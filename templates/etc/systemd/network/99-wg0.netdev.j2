@@ -1,0 +1,17 @@
+#{{ ansible_managed }}
+{{ '[NetDev]' }}
+Name=wg0
+Kind=wireguard
+Description=WireGuard tunnel wg0
+
+[WireGuard]
+ListenPort={{ wireguard_port }}
+PrivateKey={{ wireguard_private_key }}
+{% for host in wireguard_clients.keys() %}
+
+{{ '[WireGuardPeer]' }}
+# {{ host }}
+PublicKey={{ wireguard_clients[host].PublicKey }}
+AllowedIPs={{ wireguard_clients[host].AllowedIPs }}
+{% endfor %}
+

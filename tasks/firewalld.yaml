@@ -1,0 +1,21 @@
+---
+- name: Add custom wireguard to firewalld's config rules
+  template:
+    src: etc/firewalld/services/wireguard.xml.j2
+    dest: /etc/firewalld/services/wireguard.xml
+  notify: Reload firewalld
+
+- name: Add wireguard rule to firewalld
+  firewalld:
+    service: wireguard
+    permanent: yes
+    state: enabled
+  notify: Reload firewalld
+
+- name: Enable masquerading
+  firewalld:
+    masquerade: 'yes'
+    state: enabled
+    permanent: yes
+    zone: public
+  notify: Reload firewalld

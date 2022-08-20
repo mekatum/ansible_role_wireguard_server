@@ -1,0 +1,20 @@
+---
+- name: Enable EPEL repo and install WireGuard, systemd-networkd
+  block:
+    - name: Enable EPEL and ELRepo Repository
+      dnf:
+        name:
+        - epel-release
+        - elrepo-release
+        state: latest
+    - name: Install WireGuard
+      dnf:
+        name:
+        - wireguard-tools
+        - kmod-wireguard
+        state: latest
+      notify: install kmod-wireguard
+    - name: Install systemd-networkd
+      dnf:
+        name: systemd-networkd
+        state: latest

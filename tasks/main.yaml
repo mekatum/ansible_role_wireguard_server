@@ -1,0 +1,9 @@
+---
+- name: Packages
+  include_tasks: packages.yaml
+- name: Wireguard
+  include_tasks: wireguard.yaml
+- name: Firewalld
+  include_tasks: firewalld.yaml
+- name: IP forwarding
+  include_tasks: sysctl.yaml

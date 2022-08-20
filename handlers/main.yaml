@@ -1,0 +1,16 @@
+---
+- name: Restart systemd-networkd
+  systemd:
+    state: restarted
+    name: systemd-networkd
+  listen: "reconfig wireguard"
+
+- name: Reboot server for apply changes
+  reboot:
+  listen: "install kmod-wireguard"
+
+- name: Reload firewalld
+  systemd:
+    name: firewalld
+    state: reloaded
+  listen: "install kmod-wireguard"

@@ -1,0 +1,8 @@
+---
+wireguard_clients:
+  router:
+    PublicKey: ""
+    AllowedIPs: "" 
+  desktop:
+    PublicKey: ""
+    AllowedIPs: ""
